@@ -32,9 +32,8 @@
     --breakpoint-hero-sm: 550px;
     --breakpoint-hero-md: 750px;
     --breakpoint-hero-lg: 850px;
-    --breakpoint-hero-xl: 950px;    
+    --breakpoint-hero-xl: 950px;
     --breakpoint-hero-max: 1080px;
-    
 
     --container-max-width: 1650px;
 
@@ -46,7 +45,7 @@
     --color-secondary: #f06741;
     --color-secondary-orange: #fca751;
     --color-tertiary: #fc6868;
-    --color-background-light: #FFF9F3;
+    --color-background-light: #fff9f3;
     --color-background-light-red: #ffeae6;
     /* --color-background-light-orange: #ffeae6; */
 }
@@ -70,4 +69,29 @@
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
     background: #7d7d7d;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.animate-scroll-logos {
+    width: max-content;
+    animation: scroll linear infinite;
+    animation-duration: 10s;
+}
+
+.animate-scroll-logos:hover, .animate-scroll-plans:hover {
+    animation-play-state: paused;
+}
+
+.animate-scroll-plans {
+    width: max-content;
+    animation: scroll linear infinite;
+    animation-duration: 12s;
 }

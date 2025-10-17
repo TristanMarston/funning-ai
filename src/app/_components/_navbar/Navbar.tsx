@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, forwardRef } from 'react';
 import Image from 'next/image';
 import { Lora } from 'next/font/google';
 import Link from 'next/link';
@@ -9,6 +9,7 @@ import MenuToggle from './MenuToggle';
 import MobileMenu from './MobileMenu';
 import { motion } from 'motion/react';
 import { scrollVariants } from '@/app/context';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const lora = Lora({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
 // 'shadow-[0_4px_30px_rgba(0,0,0,.15)]'
@@ -20,6 +21,7 @@ export type NavLink = {
 
 const Navbar = () => {
     const [menuOpen, setMenuOpen] = useState(false);
+    const { ref: navbarRef, controls: navbarControls } = useScrollAnimation();
 
     const navLinks: NavLink[] = [
         {
@@ -39,11 +41,14 @@ const Navbar = () => {
     return (
         <>
             <motion.section
+                ref={navbarRef}
                 initial='hidden'
-                whileInView='visible'
+                animate={navbarControls}
                 variants={scrollVariants()}
-                transition={{ ease: 'anticipate', duration: 1, delay: 0 }}
-                viewport={{ once: true }}
+                transition={{
+                    ease: 'anticipate',
+                    duration: 1,
+                }}
                 className='w-screen fixed top-0 backdrop-blur-sm px-5 z-[100] flex justify-center'
             >
                 <GradientBackground className='flex items-center justify-between h-16 mt-5 rounded-full shadow-[0px_5px_0px_0px_rgba(240,79,65)] border-2 border-primary px-5 w-full max-w-max-width from-background-light via-[#FFEDDD] to-background-light'>

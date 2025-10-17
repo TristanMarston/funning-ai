@@ -1,5 +1,12 @@
+import { Figtree } from 'next/font/google';
 import type { Metadata } from 'next';
 import './globals.css';
+
+const figtree = Figtree({
+    subsets: ['latin'],
+    display: 'swap',
+    variable: '--font-figtree',
+  });
 
 export const metadata: Metadata = {
     title: 'Funning AI',
@@ -20,7 +27,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang='en'>
+        <html lang='en' className={figtree.variable}>
             <body className={`overflow-x-hidden h-screen w-screen p-0`}>{children}</body>
         </html>
     );

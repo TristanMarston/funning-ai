@@ -1,6 +1,7 @@
 import Navbar from './_components/_navbar/Navbar';
 import Hero from './_components/_landing/_hero/Hero';
 import HowItWorks from './_components/_landing/_steps/HowItWorks';
+import Footer from './_components/_footer/Footer';
 
 export default function Home() {
     return (
@@ -10,6 +11,7 @@ export default function Home() {
                 <Hero />
                 <HowItWorks />
             </div>
+            <Footer />
         </>
     );
 }

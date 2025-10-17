@@ -20,8 +20,7 @@ This is the frontend for **Funning AI**, built with **Next.js**, **TypeScript**,
 
 - [Next.js](https://nextjs.org/) — React framework for full-stack web apps
 - [TypeScript](https://www.typescriptlang.org/) — Strongly typed JavaScript
-- [Tailwind CSS](https://tailwindcss.com/) — Utility-first styling
-- [shadcn/ui](https://ui.shadcn.com/) — Clean UI component primitives
-- [Recharts](https://recharts.org/en-US/) — Data visualization for training metrics
+- [Tailwind CSS](https://tailwindcss.com/) — Utility styling
+- [shadcn/ui](https://ui.shadcn.com/) — Clean UI component library
 - [Vercel](https://vercel.com/) — Deployment and hosting
 
