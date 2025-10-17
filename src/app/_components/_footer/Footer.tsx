@@ -6,7 +6,7 @@ const Footer = () => {
     return (
         <GradientBackground animated={false} className='relative w-full pb-6 flex flex-col items-center'>
             <Image className='absolute -top-1 w-full rotate-180' src='landing-white-wave.svg' alt='wave' width={1000} height={50} />
-            <div className='max-w-max-width w-full px-5 flex flex-col items-center 2xl:flex-row 2xl:justify-between 2xl:items-start 2xl:px-10'>
+            <div className='max-w-[1280px] w-full px-5 flex flex-col items-center 2xl:flex-row 2xl:justify-between 2xl:items-start 2xl:px-10'>
                 <section className='grid gap-2 place-items-center mt-20 2xl:mt-24 5xl:mt-32 8xl:mt-36 10xl:mt-42'>
                     <Image src='/funning-logo-orange.png' alt='Funning Logo' className='w-48 h-48' width={100} height={100} />
                     <h3 className='font-figtree font-extrabold text-4xl text-primary text-center text-shadow-xs'>Funning AI</h3>
@@ -39,7 +39,7 @@ const Footer = () => {
                     </div>
                 </section>
             </div>
-            <div className='px-5 2xl:px-10 max-w-max-width w-full'>
+            <div className='px-5 2xl:px-10 max-w-[1280px] w-full'>
                 <div className='w-full lg:w-[90%] 2xl:w-full h-0.25 rounded-full bg-primary my-5 shadow-sm' />
                 <p className='text-gray-500 font-figtree text-center 2xl:text-left'>&copy; {new Date().getFullYear()} Funning AI, Inc. All Rights Reserved.</p>
             </div>
