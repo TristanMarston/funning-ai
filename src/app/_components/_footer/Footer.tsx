@@ -6,7 +6,6 @@ const Footer = () => {
     return (
         <GradientBackground animated={false} className='relative w-full pb-6 flex flex-col items-center'>
             <Image className='absolute -top-1 w-full rotate-180' src='landing-white-wave.svg' alt='wave' width={1000} height={50} />
-
             <div className='max-w-max-width w-full px-5 flex flex-col items-center 2xl:flex-row 2xl:justify-between 2xl:items-start 2xl:px-10'>
                 <section className='grid gap-2 place-items-center mt-20 2xl:mt-24 5xl:mt-32 8xl:mt-36 10xl:mt-42'>
                     <Image src='/funning-logo-orange.png' alt='Funning Logo' className='w-48 h-48' width={100} height={100} />
