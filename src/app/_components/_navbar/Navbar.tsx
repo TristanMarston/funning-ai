@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useState, forwardRef } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { Lora } from 'next/font/google';
 import Link from 'next/link';
 import { GradientBackground } from '../_landing/gradient-background';
 import MenuToggle from './MenuToggle';
@@ -10,9 +9,6 @@ import MobileMenu from './MobileMenu';
 import { motion } from 'motion/react';
 import { scrollVariants } from '@/app/context';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-
-const lora = Lora({ subsets: ['latin'], weight: ['400', '500', '600', '700'] });
-// 'shadow-[0_4px_30px_rgba(0,0,0,.15)]'
 
 export type NavLink = {
     name: string;

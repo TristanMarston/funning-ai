@@ -1,26 +1,11 @@
 'use client';
 
-import { scrollVariants } from '@/app/context';
+import { childVariants, scrollVariants } from '@/app/context';
 import { motion, Variants } from 'motion/react';
 import { GradientText } from '../gradient-text';
 import { GradientBackground } from '../gradient-background';
 import { useState } from 'react';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-
-export const childVariants: Variants = {
-    hidden: {
-        opacity: 0,
-        y: 20,
-    },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.8,
-            ease: 'easeOut',
-        },
-    },
-};
 
 const HowItWorks = () => {
     const { ref: titleRef, controls: titleControls } = useScrollAnimation();
@@ -69,7 +54,7 @@ const HowItWorks = () => {
                     className='flex flex-col 4xl:grid grid-cols-2 grid-rows-2 gap-6 4xl:gap-8'
                 >
                     {stepsElements.map(({ step, title, description }, index) => (
-                        <motion.div variants={childVariants} key={title + index} className='flex flex-col items-start p-4 border-3 border-primary rounded-2xl shadow-[5px_5px_0px_0px_rgba(240,79,65)]'>
+                        <motion.div variants={childVariants()} key={title + index} className='flex flex-col items-start p-4 border-3 border-primary rounded-2xl shadow-[5px_5px_0px_0px_rgba(240,79,65)]'>
                             <span className='flex mb-1 md:mb-0'>
                                 <GradientBackground className='font-figtree flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-red-500 via-pink-500 to-yellow-500 text-white flex items-center justify-center font-bold text-lg md:text-xl mr-3'>
                                     {step}

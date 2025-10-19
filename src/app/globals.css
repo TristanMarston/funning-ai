@@ -6,6 +6,7 @@
     --breakpoint-xxs: 330px;
     --breakpoint-xs: 350px;
     --breakpoint-sm: 375px;
+    --breakpoint-cm: 400px;
     --breakpoint-md: 425px;
     --breakpoint-lg: 500px;
     --breakpoint-xl: 600px;
@@ -47,6 +48,8 @@
     --color-tertiary: #fc6868;
     --color-background-light: #fff9f3;
     --color-background-light-red: #ffeae6;
+    --color-pink: #ec4899;
+    --color-light-pink: #ff66b2;
     /* --color-background-light-orange: #ffeae6; */
 }
 
@@ -86,7 +89,8 @@
     animation-duration: 10s;
 }
 
-.animate-scroll-logos:hover, .animate-scroll-plans:hover {
+.animate-scroll-logos:hover,
+.animate-scroll-plans:hover {
     animation-play-state: paused;
 }
 
