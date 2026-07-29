@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, MotionValue, useMotionValueEvent, useScroll, useTransform } from 'motion/react';
-import { GradientText } from '../gradient-text';
+import { GradientText } from '../GradientText';
 import { scrollVariants } from '@/app/context';
 import { useRef, useState } from 'react';
 
@@ -24,7 +24,7 @@ const HowItWorksLineAnimation = () => {
                 <section className='flex justify-start w-full p-4 relative'>
                     <NumberLine />
                     <div className='w-full pl-3'>
-                        <div style={{ height: `${LINE_HEIGHT + 56}px`}} className='w-full h-full'>
+                        <div style={{ height: `${LINE_HEIGHT + 56}px` }} className='w-full h-full'>
                             <h3 className='font-figtree font-bold text-2xl h-[56px] flex items-center'>Connect Your Running Tracker</h3>
                         </div>
                     </div>

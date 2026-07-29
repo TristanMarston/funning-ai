@@ -1,23 +1,28 @@
 'use client';
 
-import { GradientBackground } from '../gradient-background';
+import { GradientBackground } from '../GradientBackground';
 import Image from 'next/image';
-import { GradientText } from '../gradient-text';
+import { GradientText } from '../GradientText';
 import { CircleArrowRight, Sparkles } from 'lucide-react';
 import HeroVisualElement from './HeroVisualElement';
 import { motion } from 'motion/react';
 import { scrollVariants } from '@/app/context';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
+import Link from 'next/link';
+import AnimatedGradientContainer from '../AnimatedGradientContainer';
+import { useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const Hero = () => {
     const { ref: h1Ref, controls: h1Controls } = useScrollAnimation();
     const { ref: h4Ref, controls: h4Controls } = useScrollAnimation();
     const { ref: buttonsRef, controls: buttonsControls } = useScrollAnimation();
     const { ref: visualRef, controls: visualControls } = useScrollAnimation();
+    const [startButtonHovered, setStartButtonHovered] = useState(false);
 
     return (
         <div className='relative w-full'>
-            <GradientBackground className='pt-30 hero-sm:pt-32 hero-md:pt-36 hero-xl:pt-40 pb-16 hero-xs:pb-20 hero-sm:pb-28 hero-md:pb-32 hero-lg:pb-40 6xl:pb-48 9xl:pb-56 px-5 flex flex-col items-center'>
+            <div className='pt-30 hero-sm:pt-32 hero-md:pt-36 hero-xl:pt-40 pb-16 hero-xs:pb-20 hero-sm:pb-28 hero-md:pb-32 hero-lg:pb-40 6xl:pb-48 9xl:pb-56 px-5 flex flex-col items-center bg-gradient-to-r from-primary-50 via-white to-secondary-50'>
                 <div className='flex flex-col items-center px-2 min-[600px]:px-4 hero-md:px-6 hero-lg:px-10 gap-10 max-w-max-width w-full'>
                     <div className='flex flex-col items-center justify-center gap-2 w-full 5xl:w-[95%] 8xl:w-[90%]'>
                         <motion.h1
@@ -45,10 +50,24 @@ const Hero = () => {
                             variants={scrollVariants(0.2)}
                             className='flex flex-col hero-xs:flex-row gap-3 w-full hero-xs:w-auto'
                         >
-                            <button className='flex justify-center hero-xs:justify-start gap-1 py-1.5 hero-xs:py-2 px-4.5 rounded-full bg-primary text-white shadow-[0_4px_30px_rgba(0,0,0,.15)] hover:scale-[1.025] hover:brightness-[1.05] transition-all items-center cursor-pointer'>
-                                <span className='font-figtree font-semibold hero-xs:text-[15px] hero-sm:text-base hero-max:text-lg'>Start Your Journey</span>
-                                <CircleArrowRight className='w-8' />
-                            </button>
+                            <AnimatedGradientContainer
+                                onlyOnHover
+                                defaultBackgroundColor='#f04f41'
+                                className='shadow-[0_4px_30px_rgba(0,0,0,.15)] rounded-full grid place-items-center border-2 border-primary-50 p-0.5'
+                            >
+                                <Link
+                                    href='/start?mode=signup'
+                                    onMouseEnter={() => setStartButtonHovered(true)}
+                                    onMouseLeave={() => setStartButtonHovered(false)}
+                                    className={cn(
+                                        'bg-gradient-to-br from-primary-50 via-white to-white text-primary flex justify-center hero-xs:justify-start gap-1 py-1.5 hero-xs:py-2 px-4.5 rounded-full hover:scale-[1.025] hover:brightness-[1.05] transition-all items-center cursor-pointer transition-colors',
+                                        startButtonHovered ? 'bg-gradient-to-br from-primary-200 via-white to-secondary-200' : '',
+                                    )}
+                                >
+                                    <span className='font-figtree font-semibold hero-xs:text-[15px] hero-sm:text-base hero-max:text-lg'>Start Your Journey</span>
+                                    <CircleArrowRight className='w-8' />
+                                </Link>
+                            </AnimatedGradientContainer>
                             <button
                                 onClick={(e) => {
                                     e.preventDefault();
@@ -61,17 +80,11 @@ const Hero = () => {
                             </button>
                         </motion.div>
                     </div>
-                    <motion.div
-                        ref={visualRef}
-                        initial='hidden'
-                        animate={visualControls}
-                        variants={scrollVariants(0.25)}
-                        className='grid place-items-center w-full'
-                    >
+                    <motion.div ref={visualRef} initial='hidden' animate={visualControls} variants={scrollVariants(0.25)} className='grid place-items-center w-full'>
                         <HeroVisualElement />
                     </motion.div>
                 </div>
-            </GradientBackground>
+            </div>
             <Image id='hero-wave' className='absolute bottom-0 w-full' src='landing-white-wave.svg' alt='wave' width={1000} height={50} />
         </div>
     );

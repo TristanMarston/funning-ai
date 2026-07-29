@@ -50,7 +50,7 @@ const TiltCard = () => {
                 transformStyle: 'preserve-3d',
                 transform,
             }}
-            className='w-full 5xl:w-[95%] 8xl:w-[90%] h-full min-h-[40vh] rounded-xl bg-gradient-to-br from-primary to-tertiary'
+            className='w-full 5xl:w-[95%] 8xl:w-[90%] h-full min-h-[40vh] rounded-xl hero-element-gradient-border'
         >
             <div
                 style={{

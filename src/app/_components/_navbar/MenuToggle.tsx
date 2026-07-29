@@ -8,7 +8,7 @@ const MenuToggle = ({ className, toggle, isOpen, color }: { className: string; t
     <button
         onClick={toggle}
         className={`${className} ${
-            isOpen ? 'border-primary overflow-y-hidden ' : 'border-transparent'
+            isOpen ? 'border-secondary-500 overflow-y-hidden ' : 'border-transparent'
         } z-[60] p-3 border-2 rounded-full grid place-items-center transition-colors sticky cursor-pointer`}
         aria-label='Mobile Menu Button'
     >

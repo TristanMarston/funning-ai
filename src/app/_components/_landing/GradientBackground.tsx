@@ -13,9 +13,9 @@ type GradientBackgroundProps = HTMLMotionProps<'div'> & {
 
 function GradientBackground({
     className,
-    gradient = 'from-background-light/25 via-secondary-orange/25 to-background-light/25',
+    gradient,
     animated = true,
-    transition = { duration: 5, ease: 'easeInOut', repeat: Infinity },
+    transition = { duration: 10, ease: 'easeInOut', repeat: Infinity },
     ...props
 }: GradientBackgroundProps) {
     return (

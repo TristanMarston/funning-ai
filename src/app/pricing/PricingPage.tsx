@@ -1,7 +1,7 @@
 'use client';
 
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
-import { GradientText } from '../_components/_landing/gradient-text';
+import { GradientText } from '../_components/_landing/GradientText';
 import { motion } from 'motion/react';
 import { scrollVariants } from '../context';
 import Pricing from './Pricing';

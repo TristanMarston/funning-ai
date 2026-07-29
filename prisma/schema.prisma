@@ -1,0 +1,296 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  publicId      String?
+  email         String
+  emailVerified DateTime?
+  image         String?
+  password      String?
+
+  hasOnboarded   Boolean        @default(false)
+  onboardingStep OnboardingStep @default(activity_selection)
+  planData       PlanData?
+
+  accounts  Account[]
+  sessions  Session[]
+  updatedAt DateTime  @updatedAt
+  createdAt DateTime  @default(now())
+}
+
+/**
+ * -------------------------
+ * ------- PLAN DATA -------
+ * -------------------------
+ */
+
+model PlanData {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  activitiesSelected Activity[]
+
+  age       Int?
+  sex       Sex?
+  weightLbs Int?
+  injuries  String?
+
+  runningData  RunningPlanData?
+  cyclingData  CyclingPlanData?
+  strengthData StrengthPlanData?
+  sportsData   SportsPlanData?
+
+  availableTrainingDays AvailableTrainingDay[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RunningPlanData {
+  id         String @id @default(cuid())
+  planDataId String @unique
+
+  primaryGoal         PrimaryRunningGoal?
+  raceDistance        RaceDistance?
+  raceDate            DateTime?
+  weeklyMileageMin    Int?
+  weeklyMileageMax    Int?
+  justStarting        Boolean
+  longestRunPastMonth Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+}
+
+model CyclingPlanData {
+  id         String @id @default(cuid())
+  planDataId String @unique
+
+  primaryGoal      PrimaryCyclingGoal?
+  rideType         RideType?
+  weeklyMileageMin Int?
+  weeklyMileageMax Int?
+  justStarting     Boolean?
+  powerMeter       Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+}
+
+model StrengthPlanData {
+  id         String @id @default(cuid())
+  planDataId String @unique
+
+  primaryGoal          PrimaryStrengthGoal?
+  strengthExercises    StrengthExercises[]
+  experienceLevel      StrengthExperienceLevel?
+  sessionLengthMinutes Int?
+  gymAccess            GymAccessLevel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+}
+
+model SportsPlanData {
+  id         String @id @default(cuid())
+  planDataId String @unique
+
+  tennisDaysMin Int?
+  tennisDaysMax Int?
+  tennisLevel   SportExperienceLevel?
+
+  basketballDaysMin Int?
+  basketballDaysMax Int?
+  basketballLevel   SportExperienceLevel?
+
+  pickleballDaysMin Int?
+  pickleballDaysMax Int?
+  pickleballLevel   SportExperienceLevel?
+
+  soccerDaysMin Int?
+  soccerDaysMax Int?
+  soccerLevel   SportExperienceLevel?
+
+  volleyballDaysMin Int?
+  volleyballDaysMax Int?
+  volleyballLevel   SportExperienceLevel?
+
+  planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+}
+
+model AvailableTrainingDay {
+  id         String    @id @default(cuid())
+  planDataId String    @unique
+  dayOfWeek  DayOfWeek
+
+  activitiesDeclared Activity[]
+
+  runningMinutes    Int?
+  cyclingMinutes    Int?
+  strengthMinutes   Int?
+  basketballMinutes Int?
+  tennisMinutes     Int?
+  pickleballMinutes Int?
+  soccerMinutes     Int?
+  volleyballMinutes Int?
+
+  planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+}
+
+enum DayOfWeek {
+  monday
+  tuesday
+  wednesday
+  thursday
+  friday
+  saturday
+  sunday
+}
+
+enum Sex {
+  male
+  female
+  prefer_not
+}
+
+enum Activity {
+  running
+  cycling
+  strength
+  basketball
+  tennis
+  pickleball
+  soccer
+  volleyball
+}
+
+enum OnboardingStep {
+  activity_selection
+  user_info
+  running_goal
+  running_race
+  running_experience
+  running_availability
+  cycling_goal
+  cycling_experience
+  cycling_availability
+  strength_goal
+  strength_experience
+  strength_availability
+  sports_level
+  sports_frequency
+  sports_availability
+  notes_and_finalize
+}
+
+enum PrimaryRunningGoal {
+  race
+  fitness
+}
+
+enum RaceDistance {
+  dist_5k
+  dist_10k
+  dist_half
+  dist_marathon
+  dist_100m
+  dist_200m
+  dist_400m
+  dist_800m
+  dist_1600m
+  dist_3200m
+}
+
+enum PrimaryCyclingGoal {
+  event
+  fitness
+  complement
+}
+
+enum RideType {
+  road
+  mountain
+  indoor
+}
+
+enum StrengthExercises {
+  calisthenics
+  free_weights
+  weight_machines
+  core_exercises
+}
+
+enum PrimaryStrengthGoal {
+  muscle
+  athletic
+  general
+  weightloss
+  rehab
+}
+
+enum StrengthExperienceLevel {
+  beginner
+  novice
+  intermediate
+  advanced
+  expert
+}
+
+enum GymAccessLevel {
+  full
+  limited
+  unwanted
+}
+
+enum SportExperienceLevel {
+  casual
+  recreational
+  competitive
+  professional
+}

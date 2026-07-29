@@ -2,7 +2,7 @@
 
 import { motion, Variants } from 'motion/react';
 import { useState } from 'react';
-import { GradientBackground } from '../_components/_landing/gradient-background';
+import { GradientBackground } from '../_components/_landing/GradientBackground';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 import { childVariants, pricing, scrollVariants } from '../context';
 import { BadgeCheck } from 'lucide-react';

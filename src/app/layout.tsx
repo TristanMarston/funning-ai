@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
     return (
         <html lang='en' className={figtree.variable}>
-            <body className={`overflow-x-hidden h-screen w-screen p-0`}>{children}</body>
+            <body className={`overflow-x-hidden h-dvh w-dvw p-0`}>{children}</body>
         </html>
     );
 }
