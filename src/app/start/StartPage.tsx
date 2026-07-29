@@ -152,7 +152,7 @@ const StartPage = () => {
     // grid w-full h-full overflow-hidden grid-cols-[minmax(430px,0.86fr)_1.14fr] p-8 gap-16 place-items-center z-10 relative
 
     return (
-        <div className='relative h-dvh overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50 font-figtree text-gray-900'>
+        <div className='fixed inset-0 overflow-hidden bg-gradient-to-br from-primary-50 via-white to-secondary-50 font-figtree text-gray-900'>
             <div className='absolute inset-0 bg-[radial-gradient(circle_at_20%_18%,rgba(236,106,6,0.26),transparent_28%),radial-gradient(circle_at_82%_72%,rgba(104,0,180,0.28),transparent_34%)]' />
             <div className='absolute inset-0 opacity-[0.2] [background-image:linear-gradient(rgba(44,0,81,0.18)_1px,transparent_1px),linear-gradient(90deg,rgba(44,0,81,0.18)_1px,transparent_1px)] [background-size:38px_38px]' />
 

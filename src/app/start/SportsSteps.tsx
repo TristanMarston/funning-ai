@@ -92,7 +92,7 @@ export const SportsLevelStep = ({ data, updateData }: StepProps) => {
 
     return (
         <div>
-            <h2 className='text-xl font-extrabold text-gray-950'>How experienced are you in each sport?</h2>
+            <h2 className='text-xl font-extrabold text-gray-950'>How experienced are you {selectedSports.length > 1 ? 'in each sport' : `at playing ${selectedSports[0].activity}`}?</h2>
             <div className='mt-5 space-y-5'>
                 {selectedSports.map(({ activity, iconColor, icon, svg }) => {
                     const fields = sportFields[activity];
