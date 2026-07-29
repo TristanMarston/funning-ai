@@ -124,6 +124,8 @@ export type StrengthExperienceLevel = 'beginner' | 'novice' | 'intermediate' | '
 export type GymAccessLevel = 'full' | 'limited' | 'unwanted';
 export type SportExperienceLevel = 'casual' | 'recreational' | 'competitive' | 'professional';
 
+export const sportsActivities: Activity[] = ['basketball', 'tennis', 'pickleball', 'soccer', 'volleyball'];
+
 export type PlanData = {
     activities: Activity[];
 
@@ -131,6 +133,7 @@ export type PlanData = {
     sex: Sex | null;
     weightLbs: number | null;
     injuries: string | null;
+    notes: string | null;
 
     runningData: RunningPlanData | null;
     cyclingData: CyclingPlanData | null;
@@ -140,7 +143,7 @@ export type PlanData = {
 
 export type RunningPlanData = {
     primaryGoal: PrimaryRunningGoal | null;
-    raceDistance: RaceDistance | null;
+    raceDistance: RaceDistance[] | null;
     raceDate: Date | null;
     weeklyMileageMin: number | null;
     weeklyMileageMax: number | null;
@@ -163,7 +166,7 @@ export type CyclingPlanData = {
 
 export type StrengthPlanData = {
     primaryGoal: PrimaryStrengthGoal | null;
-    strengthExercises: StrengthExercises[] | null;
+    strengthExercises: StrengthExercises[];
     experienceLevel: StrengthExperienceLevel | null;
     sessionLengthMinutes: number | null;
     gymAccess: GymAccessLevel | null;
@@ -201,12 +204,12 @@ export type SportsPlanData = {
 export type AvailableTrainingDay = {
     dayOfWeek: DayOfWeek;
     activity: Activity;
-    trainingMinutes: number;
+    trainingMinutes: number | null;
 };
 
-export const emptyRunningPlanData = {
+export const emptyRunningPlanData: RunningPlanData = {
     primaryGoal: null,
-    raceDistance: null,
+    raceDistance: [],
     raceDate: null,
     weeklyMileageMin: null,
     weeklyMileageMax: null,
@@ -216,7 +219,7 @@ export const emptyRunningPlanData = {
     trainingDays: [],
 };
 
-export const emptyCyclingPlanData = {
+export const emptyCyclingPlanData: CyclingPlanData = {
     primaryGoal: null,
     rideType: null,
     weeklyMileageMin: null,
@@ -227,8 +230,9 @@ export const emptyCyclingPlanData = {
     trainingDays: [],
 };
 
-export const emptyStrengthPlanData = {
+export const emptyStrengthPlanData: StrengthPlanData = {
     primaryGoal: null,
+    strengthExercises: [],
     experienceLevel: null,
     sessionLengthMinutes: null,
     gymAccess: null,
@@ -236,7 +240,7 @@ export const emptyStrengthPlanData = {
     trainingDays: [],
 };
 
-export const emptySportsPlanData = {
+export const emptySportsPlanData: SportsPlanData = {
     tennisDaysMin: null,
     tennisDaysMax: null,
     tennisLevel: null,
@@ -269,6 +273,7 @@ export const emptyPlanData: PlanData = {
     sex: null,
     weightLbs: null,
     injuries: null,
+    notes: null,
     runningData: null,
     cyclingData: null,
     strengthData: null,
@@ -290,9 +295,9 @@ export const validateOnboardingStep = (step: OnboardingStep, planData: PlanData)
 
     if (step === 'running_goal' && planData.runningData?.primaryGoal === null) message = 'Please choose a running goal.';
     if (step === 'running_race') {
-        if (planData.runningData?.raceDistance === null) message = 'Please enter the race distance.';
+        if (planData.runningData?.raceDistance?.length === 0) message = 'Please enter the race distance.';
         if (planData.runningData?.raceDate === null) message = 'Please enter the race date.';
-        if (planData.runningData?.raceDistance || planData.runningData?.raceDate) enteredInfo = true;
+        if ((planData.runningData?.raceDistance && planData.runningData?.raceDistance.length > 0) || planData.runningData?.raceDate) enteredInfo = true;
     }
     if (
         step === 'running_experience' &&
@@ -319,7 +324,6 @@ export const validateOnboardingStep = (step: OnboardingStep, planData: PlanData)
         message = 'Please enter your cycling experience.';
     if (step === 'cycling_availability') {
         if (planData.cyclingData?.trainingDays.length === 0) message = 'Please select at least one training day.';
-        if (planData.cyclingData?.powerMeter === null) message = 'Please enter whether you have a power meter.';
         if (planData.cyclingData?.trainingDays.length !== 0 || planData.cyclingData?.powerMeter !== null) enteredInfo = true;
     }
 
@@ -353,22 +357,6 @@ export const validateOnboardingStep = (step: OnboardingStep, planData: PlanData)
         if (planData.activities.includes('volleyball') && planData.sportsData?.volleyballLevel !== null) enteredInfo = true;
     }
     if (step === 'sports_frequency') {
-        if (planData.activities.includes('tennis') && planData.sportsData?.tennisDaysMin === null && planData.sportsData?.tennisDaysMax === null) {
-            message = 'Please indicate the frequency you play tennis.';
-        }
-        if (planData.activities.includes('pickleball') && planData.sportsData?.pickleballDaysMin === null && planData.sportsData?.pickleballDaysMax === null) {
-            message = 'Please indicate the frequency you play pickleball.';
-        }
-        if (planData.activities.includes('basketball') && planData.sportsData?.basketballDaysMin === null && planData.sportsData?.basketballDaysMax === null) {
-            message = 'Please indicate the frequency you play basketball.';
-        }
-        if (planData.activities.includes('soccer') && planData.sportsData?.soccerDaysMin === null && planData.sportsData?.soccerDaysMax === null) {
-            message = 'Please indicate the frequency you play soccer.';
-        }
-        if (planData.activities.includes('volleyball') && planData.sportsData?.volleyballDaysMin === null && planData.sportsData?.volleyballDaysMax === null) {
-            message = 'Please indicate the frequency you play volleyball.';
-        }
-
         if (planData.activities.includes('tennis') && (planData.sportsData?.tennisDaysMin !== null || planData.sportsData?.tennisDaysMax !== null)) enteredInfo = true;
         if (planData.activities.includes('pickleball') && (planData.sportsData?.pickleballDaysMin !== null || planData.sportsData?.pickleballDaysMax !== null)) enteredInfo = true;
         if (planData.activities.includes('basketball') && (planData.sportsData?.basketballDaysMin !== null || planData.sportsData?.basketballDaysMax !== null)) enteredInfo = true;

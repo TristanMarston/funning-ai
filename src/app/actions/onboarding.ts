@@ -2,7 +2,7 @@
 
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
-import { Activity, AvailableTrainingDay, DayOfWeek, OnboardingStep } from '@prisma/client';
+import { Activity, DayOfWeek, OnboardingStep } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { PlanData } from '../context';
@@ -68,6 +68,7 @@ export async function updateOnboardingData({ onboardingStep, onboardingData, has
     if (onboardingData.sex !== undefined) planData.sex = onboardingData.sex;
     if (onboardingData.weightLbs !== undefined) planData.weightLbs = onboardingData.weightLbs;
     if (onboardingData.injuries !== undefined) planData.injuries = onboardingData.injuries;
+    if (onboardingData.notes !== undefined) planData.notes = onboardingData.notes;
     if (onboardingData.activities && onboardingData.activities.length > 0) planData.activitiesSelected = onboardingData.activities;
 
     // can replace 3 if statements below
@@ -80,24 +81,35 @@ export async function updateOnboardingData({ onboardingStep, onboardingData, has
     //     }
     // }
 
-    if (onboardingData.runningData !== null && planData.activitesSelected.includes('running')) {
+    // Hydrated client state can carry DB-managed columns (id, planDataId, createdAt, updatedAt) picked up from
+    // the Prisma `include` on load — those must never be forwarded into a nested create/update payload.
+    const stripDbManagedFields = (data: Record<string, any>) => {
+        const { id, planDataId: _planDataId, createdAt, updatedAt, ...rest } = data;
+        return rest;
+    };
+
+    if (onboardingData.runningData !== null && planData.activitiesSelected?.includes('running')) {
         const { trainingDays, ...rest } = onboardingData.runningData;
-        planData.runningData = { update: { where: { planDataId }, data: rest } };
+        const data = stripDbManagedFields(rest);
+        planData.runningData = { upsert: { where: { planDataId }, create: data, update: data } };
     }
-    if (onboardingData.cyclingData !== null && planData.activitesSelected.includes('cycling')) {
+    if (onboardingData.cyclingData !== null && planData.activitiesSelected?.includes('cycling')) {
         const { trainingDays, ...rest } = onboardingData.cyclingData;
-        planData.cyclingData = { update: { where: { planDataId }, data: rest } };
+        const data = stripDbManagedFields(rest);
+        planData.cyclingData = { upsert: { where: { planDataId }, create: data, update: data } };
     }
-    if (onboardingData.strengthData !== null && planData.activitesSelected.includes('strength')) {
+    if (onboardingData.strengthData !== null && planData.activitiesSelected?.includes('strength')) {
         const { trainingDays, ...rest } = onboardingData.strengthData;
-        planData.strengthData = { update: { where: { planDataId }, data: rest } };
+        const data = stripDbManagedFields(rest);
+        planData.strengthData = { upsert: { where: { planDataId }, create: data, update: data } };
     }
     if (
         onboardingData.sportsData !== null &&
-        planData.activitesSelected.some((activity: Activity) => ['tennis', 'pickleball', 'soccer', 'volleyball', 'basketball'].includes(activity))
+        planData.activitiesSelected?.some((activity: Activity) => ['tennis', 'pickleball', 'soccer', 'volleyball', 'basketball'].includes(activity))
     ) {
         const { tennisTrainingDays, basketballTrainingDays, pickleballTrainingDays, soccerTrainingDays, volleyballTrainingDays, ...rest } = onboardingData.sportsData;
-        planData.sportsData = { update: { where: { planDataId }, data: rest } };
+        const data = stripDbManagedFields(rest);
+        planData.sportsData = { upsert: { where: { planDataId }, create: data, update: data } };
     }
 
     const allTrainingDays = [
@@ -111,26 +123,29 @@ export async function updateOnboardingData({ onboardingStep, onboardingData, has
         ...(onboardingData.sportsData?.volleyballTrainingDays ?? []),
     ];
 
+    const trainingDayUpdates: { where: { id: string }; data: any }[] = [];
+
     for (const day of daysOfWeek) {
-        if (!allTrainingDays.some((d) => d.dayOfWeek === day)) continue;
+        const dayEntries = allTrainingDays.filter((t) => t.dayOfWeek === day);
+        const existingId = dbUser?.planData?.availableTrainingDays.find((d) => d.dayOfWeek === day)?.id;
 
-        let availableTrainingDayId = dbUser?.planData?.availableTrainingDays.find((d) => d.dayOfWeek === day)?.id;
-        if (!availableTrainingDayId) {
-            const newAvailableTrainingDay = await prisma.availableTrainingDay.create({ data: { planDataId, dayOfWeek: day } });
-            availableTrainingDayId = newAvailableTrainingDay.id;
+        if (dayEntries.length === 0 && !existingId) continue;
+
+        const newTrainingDay: any = { activitiesDeclared: [] as Activity[] };
+        for (const activity of activities) newTrainingDay[`${activity}Minutes`] = null;
+        for (const trainingDay of dayEntries) {
+            newTrainingDay.activitiesDeclared.push(trainingDay.activity);
+            newTrainingDay[`${trainingDay.activity}Minutes`] = trainingDay.trainingMinutes;
         }
 
-        const newTrainingDay: Partial<AvailableTrainingDay> = { planDataId, dayOfWeek: day, activitiesDeclared: [] };
-        for (const trainingDay of allTrainingDays.filter((t) => t.dayOfWeek === day)) {
-            for (const activity of activities) {
-                if (trainingDay.activity === activity) {
-                    newTrainingDay.activitiesDeclared?.push(activity);
-                    newTrainingDay[`${activity}Minutes`] = trainingDay.trainingMinutes;
-                }
-            }
+        if (existingId) {
+            trainingDayUpdates.push({ where: { id: existingId }, data: newTrainingDay });
+        } else {
+            await prisma.availableTrainingDay.create({ data: { planDataId, dayOfWeek: day, ...newTrainingDay } });
         }
-        planData.availableTrainingDays = { update: { where: { id: availableTrainingDayId }, data: newTrainingDay } };
     }
+
+    if (trainingDayUpdates.length > 0) planData.availableTrainingDays = { update: trainingDayUpdates };
 
     try {
         const user = await prisma.user.update({

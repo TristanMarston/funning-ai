@@ -4,58 +4,37 @@ import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'motion/react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Bike, ChevronDown, DoorOpen, Loader2, LogOut, ShieldHalf, Sparkles, SportShoe, Volleyball } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, DoorOpen, Loader2 } from 'lucide-react';
 import { getOnboardingData, updateOnboardingData } from '../actions/onboarding';
-import { emptyPlanData, emptySportsPlanData, failToast, OnboardingStep, PlanData, PrimaryRunningGoal, RaceDistance, Sex, validateOnboardingStep } from '../context';
-import { ActivitySelectionStep, UserInfoStep } from './OnboardingSteps';
-
-const sports = ['tennis', 'pickleball', 'soccer', 'volleyball', 'basketball'];
-
-const defaultRunningData = {
-    weeklyMileageMin: 10,
-    weeklyMileageMax: 15,
-    trainingDaysMin: 3,
-    trainingDaysMax: 5,
-};
-
-const runningGoalOptions: { value: PrimaryRunningGoal; title: string; description: string }[] = [
-    { value: 'race', title: 'Train for a race', description: 'Build toward a specific event with workouts and progression.' },
-    // { value: 'start', title: 'Start running', description: 'Create a gentle plan that makes consistency feel doable.' },
-    { value: 'fitness', title: 'Build my fitness', description: 'Improve aerobic base, strength, and weekly rhythm.' },
-];
-
-const runningRaceOptions: { value: RaceDistance; label: string }[] = [
-    { value: 'dist_5k', label: '5K' },
-    { value: 'dist_10k', label: '10K' },
-    { value: 'dist_half', label: 'Half' },
-    { value: 'dist_marathon', label: 'Marathon' },
-];
-
-const trackOptions: { value: RaceDistance; label: string }[] = [
-    { value: 'dist_100m', label: '100m' },
-    { value: 'dist_200m', label: '200m' },
-    { value: 'dist_400m', label: '400m' },
-    { value: 'dist_800m', label: '800m' },
-    { value: 'dist_1600m', label: '1600m' },
-    { value: 'dist_3200m', label: '3200m' },
-];
+import {
+    emptyCyclingPlanData,
+    emptyPlanData,
+    emptyRunningPlanData,
+    emptySportsPlanData,
+    emptyStrengthPlanData,
+    OnboardingStep,
+    PlanData,
+    sportsActivities,
+    validateOnboardingStep,
+} from '../context';
+import { ActivitySelectionStep, NotesAndFinalizeStep, UserInfoStep } from './OnboardingSteps';
+import { RunningAvailabilityStep, RunningExperienceStep, RunningGoalStep, RunningRaceStep } from './RunningSteps';
+import { CyclingAvailabilityStep, CyclingExperienceStep, CyclingGoalStep } from './CyclingSteps';
+import { StrengthAvailabilityStep, StrengthExperienceStep, StrengthGoalStep } from './StrengthSteps';
+import { SportsAvailabilityStep, SportsFrequencyStep, SportsLevelStep } from './SportsSteps';
 
 const getSteps = (planData: PlanData): OnboardingStep[] => {
-    if (!planData.activities) return ['activity_selection', 'user_info', 'running_goal', 'running_race', 'running_experience', 'running_availability', 'notes_and_finalize'];
-
     const steps: OnboardingStep[] = ['activity_selection', 'user_info'];
 
     if (planData.activities.includes('running')) steps.push('running_goal', 'running_race', 'running_experience', 'running_availability');
     if (planData.activities.includes('cycling')) steps.push('cycling_goal', 'cycling_experience', 'cycling_availability');
     if (planData.activities.includes('strength')) steps.push('strength_goal', 'strength_experience', 'strength_availability');
-    if (planData.activities.some((activity) => sports.includes(activity))) steps.push('sports_level', 'sports_frequency', 'sports_availability');
+    if (planData.activities.some((activity) => sportsActivities.includes(activity))) steps.push('sports_level', 'sports_frequency', 'sports_availability');
 
     steps.push('notes_and_finalize');
     return steps;
 };
-
-const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 const OnboardingWindow = () => {
     const router = useRouter();
@@ -72,10 +51,54 @@ const OnboardingWindow = () => {
 
     const [warnedAboutDiscarding, setWarnedAboutDiscarding] = useState(false);
 
+    const [establishingRunningMinutes, setEstablishingRunningMinutes] = useState(false);
+    const [establishingCyclingMinutes, setEstablishingCyclingMinutes] = useState(false);
+    const [establishingStrengthMinutes, setEstablishingStrengthMinutes] = useState(false);
+    const [establishingSportsMinutes, setEstablishingSportsMinutes] = useState(false);
+
+    // Keep runningData/cyclingData/strengthData/sportsData in sync with the activities the user has selected —
+    // initialize them when an activity is picked, and drop them if it's deselected before being saved server-side.
     useEffect(() => {
-        console.log(step, steps);
-        console.log(`${((step === 'activity_selection' ? 0 : steps.indexOf(step) + 1) / steps.length) * 100}%`);
-    }, [step, steps]);
+        setPlanData((prev) => {
+            const next = { ...prev };
+            let changed = false;
+
+            if (prev.activities.includes('running') && !prev.runningData) {
+                next.runningData = { ...emptyRunningPlanData };
+                changed = true;
+            } else if (!prev.activities.includes('running') && prev.runningData) {
+                next.runningData = null;
+                changed = true;
+            }
+
+            if (prev.activities.includes('cycling') && !prev.cyclingData) {
+                next.cyclingData = { ...emptyCyclingPlanData };
+                changed = true;
+            } else if (!prev.activities.includes('cycling') && prev.cyclingData) {
+                next.cyclingData = null;
+                changed = true;
+            }
+
+            if (prev.activities.includes('strength') && !prev.strengthData) {
+                next.strengthData = { ...emptyStrengthPlanData };
+                changed = true;
+            } else if (!prev.activities.includes('strength') && prev.strengthData) {
+                next.strengthData = null;
+                changed = true;
+            }
+
+            const hasSport = prev.activities.some((activity) => sportsActivities.includes(activity));
+            if (hasSport && !prev.sportsData) {
+                next.sportsData = { ...emptySportsPlanData };
+                changed = true;
+            } else if (!hasSport && prev.sportsData) {
+                next.sportsData = null;
+                changed = true;
+            }
+
+            return changed ? next : prev;
+        });
+    }, [planData.activities]);
 
     useEffect(() => {
         const loadOnboarding = async () => {
@@ -87,7 +110,7 @@ const OnboardingWindow = () => {
                 }
 
                 if (res.user.planData) {
-                    const nextData: PlanData = emptyPlanData;
+                    const nextData: PlanData = { ...emptyPlanData };
 
                     nextData.activities = [...res.user.planData.activitiesSelected];
 
@@ -95,43 +118,54 @@ const OnboardingWindow = () => {
                     if (res.user.planData.sex !== undefined) nextData.sex = res.user.planData.sex;
                     if (res.user.planData.weightLbs !== undefined) nextData.weightLbs = res.user.planData.weightLbs;
                     if (res.user.planData.injuries !== undefined) nextData.injuries = res.user.planData.injuries;
+                    if (res.user.planData.notes !== undefined) nextData.notes = res.user.planData.notes;
 
                     if (res.user.planData.runningData) nextData.runningData = { ...res.user.planData.runningData, trainingDays: [] };
                     if (res.user.planData.cyclingData) nextData.cyclingData = { ...res.user.planData.cyclingData, trainingDays: [] };
                     if (res.user.planData.strengthData) nextData.strengthData = { ...res.user.planData.strengthData, trainingDays: [] };
-                    if (res.user.planData.sportsData) nextData.sportsData = { ...res.user.planData.sportsData, ...emptySportsPlanData };
+                    if (res.user.planData.sportsData) {
+                        nextData.sportsData = {
+                            ...emptySportsPlanData,
+                            ...res.user.planData.sportsData,
+                            tennisTrainingDays: [],
+                            basketballTrainingDays: [],
+                            pickleballTrainingDays: [],
+                            soccerTrainingDays: [],
+                            volleyballTrainingDays: [],
+                        };
+                    }
 
                     for (const trainingDay of res.user.planData.availableTrainingDays) {
-                        if (nextData.runningData && trainingDay.runningMinutes && trainingDay.runningMinutes > 0) {
+                        if (nextData.runningData && trainingDay.activitiesDeclared.includes('running')) {
                             nextData.runningData.trainingDays.push({ dayOfWeek: trainingDay.dayOfWeek, activity: 'running', trainingMinutes: trainingDay.runningMinutes });
                         }
-                        if (nextData.cyclingData && trainingDay.cyclingMinutes && trainingDay.cyclingMinutes > 0) {
+                        if (nextData.cyclingData && trainingDay.activitiesDeclared.includes('cycling')) {
                             nextData.cyclingData.trainingDays.push({ dayOfWeek: trainingDay.dayOfWeek, activity: 'cycling', trainingMinutes: trainingDay.cyclingMinutes });
                         }
-                        if (nextData.strengthData && trainingDay.strengthMinutes && trainingDay.strengthMinutes > 0) {
+                        if (nextData.strengthData && trainingDay.activitiesDeclared.includes('strength')) {
                             nextData.strengthData.trainingDays.push({ dayOfWeek: trainingDay.dayOfWeek, activity: 'strength', trainingMinutes: trainingDay.strengthMinutes });
                         }
-                        if (nextData.sportsData && trainingDay.basketballMinutes && trainingDay.basketballMinutes > 0) {
+                        if (nextData.sportsData && trainingDay.activitiesDeclared.includes('basketball')) {
                             nextData.sportsData.basketballTrainingDays.push({
                                 dayOfWeek: trainingDay.dayOfWeek,
                                 activity: 'basketball',
                                 trainingMinutes: trainingDay.basketballMinutes,
                             });
                         }
-                        if (nextData.sportsData && trainingDay.tennisMinutes && trainingDay.tennisMinutes > 0) {
+                        if (nextData.sportsData && trainingDay.activitiesDeclared.includes('tennis')) {
                             nextData.sportsData.tennisTrainingDays.push({ dayOfWeek: trainingDay.dayOfWeek, activity: 'tennis', trainingMinutes: trainingDay.tennisMinutes });
                         }
-                        if (nextData.sportsData && trainingDay.pickleballMinutes && trainingDay.pickleballMinutes > 0) {
+                        if (nextData.sportsData && trainingDay.activitiesDeclared.includes('pickleball')) {
                             nextData.sportsData.pickleballTrainingDays.push({
                                 dayOfWeek: trainingDay.dayOfWeek,
                                 activity: 'pickleball',
                                 trainingMinutes: trainingDay.pickleballMinutes,
                             });
                         }
-                        if (nextData.sportsData && trainingDay.soccerMinutes && trainingDay.soccerMinutes > 0) {
+                        if (nextData.sportsData && trainingDay.activitiesDeclared.includes('soccer')) {
                             nextData.sportsData.soccerTrainingDays.push({ dayOfWeek: trainingDay.dayOfWeek, activity: 'soccer', trainingMinutes: trainingDay.soccerMinutes });
                         }
-                        if (nextData.sportsData && trainingDay.volleyballMinutes && trainingDay.volleyballMinutes > 0) {
+                        if (nextData.sportsData && trainingDay.activitiesDeclared.includes('volleyball')) {
                             nextData.sportsData.volleyballTrainingDays.push({
                                 dayOfWeek: trainingDay.dayOfWeek,
                                 activity: 'volleyball',
@@ -164,8 +198,31 @@ const OnboardingWindow = () => {
         setSaving(true);
         setErrorMessage('');
 
+        let updateData;
+        if (step === 'running_availability' && !establishingRunningMinutes && planData.runningData) {
+            updateData = { ...planData, runningData: { ...planData.runningData, trainingDays: planData.runningData.trainingDays.map((d) => ({ ...d, trainingMinutes: null })) } };
+        } else if (step === 'cycling_availability' && !establishingCyclingMinutes && planData.cyclingData) {
+            updateData = { ...planData, cyclingData: { ...planData.cyclingData, trainingDays: planData.cyclingData.trainingDays.map((d) => ({ ...d, trainingMinutes: null })) } };
+        } else if (step === 'strength_availability' && !establishingStrengthMinutes && planData.strengthData) {
+            updateData = { ...planData, strengthData: { ...planData.strengthData, trainingDays: planData.strengthData.trainingDays.map((d) => ({ ...d, trainingMinutes: null })) } };
+        } else if (step === 'sports_availability' && !establishingSportsMinutes && planData.sportsData) {
+            updateData = {
+                ...planData,
+                sportsData: {
+                    ...planData.sportsData,
+                    tennisTrainingDays: planData.sportsData.tennisTrainingDays.map((d) => ({ ...d, trainingMinutes: null })),
+                    basketballTrainingDays: planData.sportsData.basketballTrainingDays.map((d) => ({ ...d, trainingMinutes: null })),
+                    pickleballTrainingDays: planData.sportsData.pickleballTrainingDays.map((d) => ({ ...d, trainingMinutes: null })),
+                    soccerTrainingDays: planData.sportsData.soccerTrainingDays.map((d) => ({ ...d, trainingMinutes: null })),
+                    volleyballTrainingDays: planData.sportsData.volleyballTrainingDays.map((d) => ({ ...d, trainingMinutes: null })),
+                },
+            };
+        } else updateData = { ...planData };
+
+        setPlanData(updateData);
+
         try {
-            const res = await updateOnboardingData({ onboardingStep: steps[nextStepIndex], onboardingData: planData, hasOnboarded: completed });
+            const res = await updateOnboardingData({ onboardingStep: steps[nextStepIndex], onboardingData: updateData, hasOnboarded: completed });
 
             if (res.error) setErrorMessage('We could not save that step. Please try again.');
         } catch (error) {
@@ -196,6 +253,8 @@ const OnboardingWindow = () => {
             }
         }
 
+        if (steps[nextStepIndex] === 'running_race' && planData.runningData?.primaryGoal !== 'race') nextStepIndex += forward ? 1 : -1;
+
         if (forward) await saveProgress(nextStepIndex, false);
         setStep(steps[nextStepIndex]);
         setSteps(getSteps(planData));
@@ -213,31 +272,14 @@ const OnboardingWindow = () => {
         router.push('/dashboard');
     };
 
-    // const setMileageMin = (value: number) => {
-    //     const nextMin = clamp(value, 0, planData.weeklyMileageMax);
-    //     updateData({
-    //         weeklyMileageMin: nextMin,
-    //         weeklyMileageMax: clamp(planData.weeklyMileageMax, nextMin, nextMin + 5),
-    //     });
-    // };
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const [contentHeight, setContentHeight] = useState(0);
 
-    // const setMileageMax = (value: number) => {
-    //     const nextMax = clamp(value, planData.weeklyMileageMin, 120);
-    //     updateData({
-    //         weeklyMileageMax: nextMax,
-    //         weeklyMileageMin: clamp(planData.weeklyMileageMin, nextMax - 5, nextMax),
-    //     });
-    // };
-
-    // const setTrainingDaysMin = (value: number) => {
-    //     const nextMin = clamp(value, 1, planData.trainingDaysMax);
-    //     updateData({ trainingDaysMin: nextMin });
-    // };
-
-    // const setTrainingDaysMax = (value: number) => {
-    //     const nextMax = clamp(value, planData.trainingDaysMin, 7);
-    //     updateData({ trainingDaysMax: nextMax });
-    // };
+    useEffect(() => {
+        if (sectionRef.current) {
+            setContentHeight(sectionRef.current.scrollHeight);
+        }
+    }, [step, planData]);
 
     return (
         <motion.section
@@ -247,15 +289,10 @@ const OnboardingWindow = () => {
             }}
             initial='hidden'
             animate='visible'
+            ref={sectionRef}
             transition={{ duration: 0.45, ease: 'easeOut' }}
             className='@container/onboarding relative overflow-y-auto overflow-x-hidden hide-scrollbar w-[calc(100%-2rem)] max-h-[90dvh] max-w-[680px] rounded-[28px] border-[1.5px] border-primary-400 bg-gradient-to-br from-white via-primary-50/80 to-white px-6 py-6 shadow-[0_20px_50px_rgba(155,65,240,0.16)] min-[440px]:px-9 min-[440px]:py-8'
         >
-            <div
-                className={cn(
-                    'absolute inset-0 w-full h-full rounded-[28px] border-[1.5px] border-transparent',
-                    saving ? 'animate-pulse bg-white/80 block pointer-events-none' : 'bg-transparent hidden',
-                )}
-            />
             <motion.div
                 className='pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary-400 via-tertiary-400 to-secondary-500'
                 animate={{ width: `${((step === 'activity_selection' ? 0 : steps.indexOf(step) + 1) / steps.length) * 100}%` }}
@@ -270,10 +307,6 @@ const OnboardingWindow = () => {
                     <h1 className='text-3xl font-extrabold leading-tight text-gray-950 @min-[420px]/onboarding:text-4xl'>Let&apos;s shape your plan.</h1>
                     <p className='mb-6 mt-1 max-w-xl text-[15px] leading-7 text-gray-600'>A few details help Funning tune your training load, recovery, and recommendations.</p>
 
-                    {/* <div className='mb-7 h-2 overflow-hidden rounded-full bg-white shadow-inner shadow-primary-100/80'>
-                        <motion.div className='h-full rounded-full bg-gradient-to-r from-primary-400 to-secondary-500' animate={{ width: `${progress}%` }} />
-                    </div> */}
-
                     <AnimatePresence mode='wait'>
                         <motion.div
                             key={step}
@@ -285,6 +318,53 @@ const OnboardingWindow = () => {
                         >
                             {step === 'activity_selection' && <ActivitySelectionStep data={planData} updateData={updateData} />}
                             {step === 'user_info' && <UserInfoStep data={planData} updateData={updateData} />}
+
+                            {step === 'running_goal' && <RunningGoalStep data={planData} updateData={updateData} />}
+                            {step === 'running_race' && planData.runningData?.primaryGoal === 'race' && <RunningRaceStep data={planData} updateData={updateData} />}
+                            {step === 'running_experience' && <RunningExperienceStep data={planData} updateData={updateData} />}
+                            {step === 'running_availability' && (
+                                <RunningAvailabilityStep
+                                    data={planData}
+                                    updateData={updateData}
+                                    establishingMinutes={establishingRunningMinutes}
+                                    setEstablishingMinutes={setEstablishingRunningMinutes}
+                                />
+                            )}
+
+                            {step === 'cycling_goal' && <CyclingGoalStep data={planData} updateData={updateData} />}
+                            {step === 'cycling_experience' && <CyclingExperienceStep data={planData} updateData={updateData} />}
+                            {step === 'cycling_availability' && (
+                                <CyclingAvailabilityStep
+                                    data={planData}
+                                    updateData={updateData}
+                                    establishingMinutes={establishingCyclingMinutes}
+                                    setEstablishingMinutes={setEstablishingCyclingMinutes}
+                                />
+                            )}
+
+                            {step === 'strength_goal' && <StrengthGoalStep data={planData} updateData={updateData} />}
+                            {step === 'strength_experience' && <StrengthExperienceStep data={planData} updateData={updateData} />}
+                            {step === 'strength_availability' && (
+                                <StrengthAvailabilityStep
+                                    data={planData}
+                                    updateData={updateData}
+                                    establishingMinutes={establishingStrengthMinutes}
+                                    setEstablishingMinutes={setEstablishingStrengthMinutes}
+                                />
+                            )}
+
+                            {step === 'sports_level' && <SportsLevelStep data={planData} updateData={updateData} />}
+                            {step === 'sports_frequency' && <SportsFrequencyStep data={planData} updateData={updateData} />}
+                            {step === 'sports_availability' && (
+                                <SportsAvailabilityStep
+                                    data={planData}
+                                    updateData={updateData}
+                                    establishingMinutes={establishingSportsMinutes}
+                                    setEstablishingMinutes={setEstablishingSportsMinutes}
+                                />
+                            )}
+
+                            {step === 'notes_and_finalize' && <NotesAndFinalizeStep data={planData} updateData={updateData} />}
                         </motion.div>
                     </AnimatePresence>
 
@@ -338,7 +418,7 @@ const OnboardingWindow = () => {
                                     className='cursor-pointer w-full @min-[380px]/onboarding:w-fit relative inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-extrabold shadow-inner gradient-shadow-box gradient-shadow-box-border transition-all hover:-translate-y-0.5 disabled:pointer-events-none hover:shadow-sm disabled:opacity-70'
                                 >
                                     {saving ? <Loader2 className='size-4 animate-spin' /> : null}
-                                    <span>{steps.indexOf(step) === steps.length - 1 ? 'Create My Plan' : 'Continue'}</span>
+                                    <span>{steps.indexOf(step) === steps.length - 1 ? 'Create Plan' : 'Continue'}</span>
                                     {!saving ? <ArrowRight className='size-4' /> : null}
                                 </button>
                             </div>
@@ -346,6 +426,13 @@ const OnboardingWindow = () => {
                     </div>
                 </div>
             )}
+            <div
+                style={{ height: `${contentHeight}px` }}
+                className={cn(
+                    'absolute inset-0 w-full rounded-[28px] border-[1.5px] border-transparent z-[200] transition-colors',
+                    saving ? 'animate-pulse bg-white/80 block pointer-events-none' : 'bg-transparent hidden',
+                )}
+            />
         </motion.section>
     );
 };

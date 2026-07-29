@@ -72,6 +72,7 @@ model PlanData {
   sex       Sex?
   weightLbs Int?
   injuries  String?
+  notes     String?
 
   runningData  RunningPlanData?
   cyclingData  CyclingPlanData?
@@ -91,11 +92,11 @@ model RunningPlanData {
   planDataId String @unique
 
   primaryGoal         PrimaryRunningGoal?
-  raceDistance        RaceDistance?
+  raceDistance        RaceDistance[]
   raceDate            DateTime?
   weeklyMileageMin    Int?
   weeklyMileageMax    Int?
-  justStarting        Boolean
+  justStarting        Boolean?
   longestRunPastMonth Float?
 
   createdAt DateTime @default(now())
@@ -166,7 +167,7 @@ model SportsPlanData {
 
 model AvailableTrainingDay {
   id         String    @id @default(cuid())
-  planDataId String    @unique
+  planDataId String
   dayOfWeek  DayOfWeek
 
   activitiesDeclared Activity[]
@@ -181,6 +182,8 @@ model AvailableTrainingDay {
   volleyballMinutes Int?
 
   planData PlanData @relation(fields: [planDataId], references: [id], onDelete: Cascade)
+
+  @@unique([planDataId, dayOfWeek])
 }
 
 enum DayOfWeek {
